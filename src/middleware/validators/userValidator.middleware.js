@@ -79,30 +79,6 @@ exports.updateUserSchema = [
     .withMessage(
       "confirm_password field must have the same value as the password field"
     ),
-    body("bio")
-    .optional()
-    .custom((value, { req }) => value === req.body.bio)
-    .withMessage(
-      "bio"
-    ),
-    body("adresse")
-    .optional()
-    .custom((value, { req }) => value === req.body.adresse)
-    .withMessage(
-      "adr"
-    ),
-    body("grade")
-    .optional()
-    .custom((value, { req }) => value === req.body.grade)
-    .withMessage(
-      "grade"
-    ),
-    body("numTel")
-    .optional()
-    .custom((value, { req }) => value === req.body.numTel)
-    .withMessage(
-      "phone"
-    ),
   body()
     .custom((value) => {
       return !!Object.keys(value).length;
@@ -118,10 +94,6 @@ exports.updateUserSchema = [
         "confirm_password",
         "date_inscription",
         "role",
-        "bio",
-        "adresse",
-        "grade",
-        "numTel",
       ];
       return updates.every((update) => allowUpdates.includes(update));
     })

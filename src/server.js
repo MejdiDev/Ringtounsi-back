@@ -5,10 +5,10 @@ const HttpException = require("./utils/HttpException.utils");
 const errorMiddleware = require("./middleware/error.middleware");
 const userRouter = require("./routes/user.route");
 const coachRouter = require("./routes/coach.route");
-
+const postRoutes = require("./routes/post.route");
 
 const app = express();
-require('dotenv').config();
+require("dotenv").config();
 app.use(express.json());
 app.use(cors());
 app.options("*", cors());
@@ -17,7 +17,7 @@ const port = Number(process.env.PORT || 3000);
 
 app.use(`/api/v1/users`, userRouter);
 app.use(`/api/v1/coaches`, coachRouter);
-
+app.use(`/api/v1/posts`, postRoutes);
 
 app.get("/api/v1", (req, res) => {
   res.json({ message: "Welcome to ringTounsi application." });

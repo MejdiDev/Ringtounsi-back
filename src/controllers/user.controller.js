@@ -51,49 +51,49 @@ class UserController {
 
   createUser = async (req, res, next) => {
     this.checkValidation(req);
-  
+
     await this.hashPassword(req);
-  
+
     const { role } = req.body;
-    let status = '';
-  
-    if (role === 'Coach') {
-      status = 'pending'; // If the role is coach, set status as pending
+    let status = "";
+
+    if (role === "Coach") {
+      status = "pending"; // If the role is coach, set status as pending
     } else {
-      status = 'approved'; // For other roles, set status as approved
+      status = "approved"; // For other roles, set status as approved
     }
-  
+
     const result = await UserModel.create({ ...req.body, status });
-  
+
     if (!result) {
       throw new HttpException(500, "Something went wrong");
     }
-  
+
     res.status(201).send("User was created!");
   };
-  
+
   updateUser = async (req, res, next) => {
     this.checkValidation(req);
-  
-    const { ...restOfUpdates } = req.body;
-  
+    await this.hashPassword(req);
+    const { confirm_password, ...restOfUpdates } = req.body;
+
     const result = await UserModel.update(restOfUpdates, req.params.id);
-  
+
     if (!result) {
       throw new HttpException(404, "User not found");
     }
-  
+
     const { affectedRows, changedRows, info } = result;
-  
+
     const message = !affectedRows
       ? "User not found"
       : affectedRows && changedRows
       ? "User updated successfully"
       : "Updated failed";
-  
+
     res.send({ message, info });
   };
-  
+
   deleteUser = async (req, res, next) => {
     const result = await UserModel.delete(req.params.id);
     if (!result) {
@@ -154,69 +154,67 @@ class UserController {
     const result = await UserModel.rateCoach(userId, coachId, rating);
 
     if (!result) {
-        throw new HttpException(500, "Something went wrong");
+      throw new HttpException(500, "Something went wrong");
     }
 
     res.status(201).send("Coach has been rated!");
-};
-///////////
-getCoachRatingById = async (req, res, next) => {
-  try {
-    const coachId = req.params.coachId;
-    const coachRating = await UserModel.getCoachRatingById(coachId);
+  };
+  ///////////
+  getCoachRatingById = async (req, res, next) => {
+    try {
+      const coachId = req.params.coachId;
+      const coachRating = await UserModel.getCoachRatingById(coachId);
 
-    if (!coachRating) {
-      throw new HttpException(404, "Aucun rating de coach trouvé");
+      if (!coachRating) {
+        throw new HttpException(404, "Aucun rating de coach trouvé");
+      }
+
+      res.send(coachRating);
+    } catch (error) {
+      next(error);
     }
+  };
 
-    res.send(coachRating);
-  } catch (error) {
-    next(error);
-  }
-};
+  addCommentToCoach = async (req, res, next) => {
+    try {
+      const { coachId, comment, rating } = req.body;
 
-addCommentToCoach = async (req, res, next) => {
-  try {
-    const result = await UserModel.addComment(req.body);
+      // L'ID de l'utilisateur est extrait à partir du token
+      const userId = req.currentUser.id;
 
+      const result = await UserModel.addComment({ userId, coachId, comment, rating });
 
-    if (!result) {
-      throw new HttpException(500, "Erreur lors de l'ajout du commentaire");
+      if (!result) {
+        throw new HttpException(500, "Erreur lors de l'ajout du commentaire");
+      }
+
+      res.send("Commentaire ajouté avec succès !");
+    } catch (error) {
+      next(error);
     }
+  };
 
-    res.status(200).send("Commentaire ajouté avec succès !");
-  } catch (error) {
-    next(error);
-  }
-};
+  getCoachComments = async (req, res, next) => {
+    try {
+      const coachId = req.params.coachId;
+      const comments = await UserModel.getCoachComments(coachId);
 
-getCoachComments = async (req, res, next) => {
-  try {
-    const coachId = req.params.coachId;
-    const comments = await UserModel.getCoachComments(coachId);
+      // Manipulez les données comme vous le souhaitez avant de les renvoyer
+      const formattedComments = comments.map((comment) => ({
+        comment: comment.comment,
+        created_at: comment.created_at,
+        user: {
+          nom: comment.user_nom,
+          prenom: comment.user_prenom,
+        },
+        rating: comment.rating
+      }));
 
-    // Manipulez les données comme vous le souhaitez avant de les renvoyer
-    const formattedComments = comments.map((comment) => ({
-      
-      comment: comment.comment,
-      created_at: comment.created_at,
-      rating: comment.rating,
-      user: {
-        nom: comment.user_nom,
-        prenom: comment.user_prenom,
-      },
-    }));
-
-    res.send(formattedComments);
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-
-
+      res.send(formattedComments);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = new UserController();
